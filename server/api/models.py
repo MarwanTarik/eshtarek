@@ -1,5 +1,7 @@
 import uuid
 import django.db.models as models
+
+from server.api.enums.subscriptions_billing_cycle import SubscriptionsBillingCycle
 from .enums.role import Role
 from .enums.limit_policies_metrics import LimitPoliciesMetrics
 from .enums.subscriptions_status import SubscriptionsStatus
@@ -8,6 +10,7 @@ class Users(models.Model):
     id = models.UUIDField(auto_created=True, primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=255)
+    password = models.CharField(max_length=500, required=True)
     role = models.CharField(max_length=50, choices=Role.choices)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -23,7 +26,7 @@ class Users(models.Model):
             models.Index(fields=['email'], name='email_index'),
             models.Index(fields=['role'], name='role_index')
         ]
-    
+        
     def __str__(self):
         return 'name: {}, email: {} - role: {}'.format(self.name, self.email, self.role)
 
@@ -65,10 +68,7 @@ class Plans(models.Model):
     id = models.UUIDField(auto_created=True, primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
-    billing_cycle = models.CharField(max_length=50, choices=[
-        ('monthly', 'Monthly'),
-        ('yearly', 'Yearly')
-    ])
+    billing_cycle = models.CharField(max_length=20, choices=SubscriptionsBillingCycle.choices)
     billing_duration = models.PositiveIntegerField(help_text='Duration in months for monthly plans or years for yearly plans')
     price = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
