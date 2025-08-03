@@ -1,0 +1,28 @@
+services:
+  web:
+    build: .
+    command: python manage.py runserver
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DJANGO_SETTINGS_MODULE=server.settings
+    depends_on:
+      - db
+
+  db:
+    image: postgres:14.18
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
