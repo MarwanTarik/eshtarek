@@ -1,20 +1,24 @@
 import uuid
 import django.db.models as models
-
-from server.api.enums.subscriptions_billing_cycle import SubscriptionsBillingCycle
+from .enums.subscriptions_billing_cycle import SubscriptionsBillingCycle
 from .enums.role import Role
 from .enums.limit_policies_metrics import LimitPoliciesMetrics
 from .enums.subscriptions_status import SubscriptionsStatus
+from django.contrib.auth.models import AbstractUser
 
-class Users(models.Model):
-    id = models.UUIDField(auto_created=True, primary_key=True, default=uuid.uuid4, editable=False)
+class Users(AbstractUser):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=255)
-    password = models.CharField(max_length=500, required=True)
     role = models.CharField(max_length=50, choices=Role.choices)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    username = None 
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['name']
+    USER_ID_FIELD = 'id'
+    
     class Meta:
         db_table = 'users'
         verbose_name = 'User'

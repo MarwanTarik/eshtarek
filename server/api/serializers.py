@@ -4,47 +4,24 @@ from .models import *
 from .enums.role import Role
 from .enums.limit_policies_metrics import LimitPoliciesMetrics
 from .enums.subscriptions_status import SubscriptionsStatus
+from .enums.subscriptions_billing_cycle import SubscriptionsBillingCycle
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+from django.contrib.auth import authenticate
+from django.contrib.auth.hashers import make_password, check_password
+from django.db import transaction
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Users
         fields = ['id', 'email', 'name', 'role', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'created_at', 'updated_at']
-
-class CreateUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Users
-        fields = ['email', 'name', 'role', 'password']
-        read_only_fields = ['id', 'created_at', 'updated_at']
-        extra_kwargs = {'password': {'write_only': True}}
-    
-    def validate_role(self, value):
-        if value not in [choice[0] for choice in Role.choices]:
-            raise serializers.ValidationError(f"Invalid role. Must be one of: {[choice[0] for choice in Role.choices]}")
-        return value
-
-class UpdateUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Users
-        fields = ['email', 'name']
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'role']
+        write_only_fields = ['password']
 
 class TenantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tenants
         fields = ['id', 'name', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'created_at', 'updated_at']
-
-class CreateTenantSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Tenants
-        fields = ['name']
-        read_only_fields = ['id', 'created_at', 'updated_at']
-
-class UpdateTenantSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Tenants
-        fields = ['name']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
@@ -57,73 +34,29 @@ class UserTenantSerializer(serializers.ModelSerializer):
         fields = ['user', 'tenant', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
 
-class CreateUserTenantSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserTenants
-        fields = ['user', 'tenant']
-        read_only_fields = ['created_at', 'updated_at']
-        extra_kwargs = {'user': {'required': True}, 'tenant': {'required': True}}
 
 class PlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = Plans
-        fields = ['id', 'name', 'description', 'billing_cycle', 'billing_duration', 'price', 'created_at', 'updated_at', 'created_by']
+        fields = [
+            'id', 
+            'name', 
+            'description', 
+            'billing_cycle', 
+            'billing_duration', 
+            'price', 
+            'created_at', 
+            'updated_at', 
+            'created_by'
+        ]
         read_only_fields = ['id', 'created_at', 'updated_at']
-
-class CreatePlanSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Plans
-        fields = ['name', 'price', 'description', 'billing_cycle', 'billing_duration', 'created_by']
-        read_only_fields = ['id', 'created_at', 'updated_at']
-        extra_kwargs = {'price': {'required': True}}
-    
-    def validate_billing_cycle(self, value):
-        valid_cycles = [choice[0] for choice in SubscriptionsBillingCycle.choices]
-        if value not in valid_cycles:
-            raise serializers.ValidationError(f"Invalid billing cycle. Must be one of: {valid_cycles}")
-        return value
-    
-    def validate_price(self, value):
-        if value <= 0:
-            raise serializers.ValidationError("Price must be greater than 0")
-        return value
-
-class UpdatePlanSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Plans
-        fields = ['name', 'price', 'description', 'billing_cycle', 'billing_duration']
-        read_only_fields = ['id', 'created_at', 'updated_at']
-        extra_kwargs = {'price': {'required': True}}
 
 class LimitPoliciesSerializer(serializers.ModelSerializer):
     class Meta:
         model = LimitPolicies
         fields = ['id', 'metric', 'limit', 'created_at', 'updated_at', 'created_by']
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'created_by']
 
-class CreateLimitPolicySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = LimitPolicies
-        fields = ['metric', 'limit', 'created_by']
-        read_only_fields = ['id', 'created_at', 'updated_at']
-        extra_kwargs = {'limit': {'required': True}}
-    
-    def validate_metric(self, value):
-        if value not in [choice[0] for choice in LimitPoliciesMetrics.choices]:
-            raise serializers.ValidationError(f"Invalid metric. Must be one of: {[choice[0] for choice in LimitPoliciesMetrics.choices]}")
-        return value
-    
-    def validate_limit(self, value):
-        if value <= 0:
-            raise serializers.ValidationError("Limit must be greater than 0")
-        return value
-
-class UpdateLimitPolicySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = LimitPolicies
-        fields = ['metric', 'limit']
-        read_only_fields = ['id', 'created_at', 'updated_at']
-        extra_kwargs = {'limit': {'required': True}}
 
 class PlanLimitPolicySerializer(serializers.ModelSerializer):
     plan = PlanSerializer(read_only=True)
@@ -134,13 +67,6 @@ class PlanLimitPolicySerializer(serializers.ModelSerializer):
         fields = ['plan', 'limit_policy', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
 
-class CreatePlanLimitPolicySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PlansLimitPolicies
-        fields = ['plan', 'limit_policy']
-        read_only_fields = ['created_at', 'updated_at']
-        extra_kwargs = {'plan': {'required': True}, 'limit_policy': {'required': True}}
-
 class SubscriptionSerializer(serializers.ModelSerializer):
     plan = PlanSerializer(read_only=True)
     tenant = TenantSerializer(read_only=True)
@@ -150,31 +76,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         fields = ['id', 'plan', 'tenant', 'status', 'started_at', 'ended_at', 'created_at', 'updated_at', 'created_by_user_id']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
-class CreateSubscriptionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Subscriptions
-        fields = ['plan_id', 'tenant_id', 'status', 'started_at', 'ended_at', 'created_by_user_id']
-        read_only_fields = ['id', 'created_at', 'updated_at']
-        extra_kwargs = {'status': {'required': True}, 'started_at': {'required': True}, 'ended_at': {'required': True}}
-    
-    def validate_status(self, value):
-        if value not in [choice[0] for choice in SubscriptionsStatus.choices]:
-            raise serializers.ValidationError(f"Invalid status. Must be one of: {[choice[0] for choice in SubscriptionsStatus.choices]}")
-        return value
-    
-    def validate(self, data):
-        if data.get('started_at') and data.get('ended_at'):
-            if data['started_at'] >= data['ended_at']:
-                raise serializers.ValidationError("End date must be after start date")
-        return data
 
-
-class UpdateSubscriptionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Subscriptions
-        fields = ['status', 'started_at', 'ended_at', 'plan_id']
-        read_only_fields = ['id', 'created_at', 'updated_at']
-        extra_kwargs = {'status': {'required': True}, 'started_at': {'required': True}, 'ended_at': {'required': True}, 'plan_id': {'required': True}}
 
 class UsagesSerializer(serializers.ModelSerializer):
     class Meta:
@@ -182,27 +84,127 @@ class UsagesSerializer(serializers.ModelSerializer):
         fields = ['id', 'metric', 'value', 'created_at', 'updated_at', 'subscription_id']
         read_only_fields = ['id', 'created_at', 'updated_at', 'subscription_id']
 
-class CreateUsageSerializer(serializers.ModelSerializer):
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(required=True, write_only=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'username' in self.fields:
+            del self.fields['username']
+
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['role'] = user.role
+        token['id'] = str(user.id)
+        return token
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        password = attrs.get('password')
+        
+        try:
+            user = Users.objects.get(email=email)
+        except Users.DoesNotExist:
+            raise serializers.ValidationError("Invalid email or password")
+        
+        if not check_password(password, user.password):
+            raise serializers.ValidationError("Invalid email or password")
+        
+        refresh = self.get_token(user)
+        
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
+
+
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    tenant_name = serializers.CharField(required=True, write_only=True)
+
     class Meta:
-        model = Usages
-        fields = ['metric', 'value', 'subscription_id']
-        read_only_fields = ['id', 'created_at', 'updated_at']
-        extra_kwargs = {'metric': {'required': True}, 'value': {'required': True}, 'subscription_id': {'required': True}}
+        model = Users
+        fields = ['email', 'name', 'password', 'tenant_name']
+        write_only_fields = ['password']
     
-    def validate_metric(self, value):
-        if value not in [choice[0] for choice in LimitPoliciesMetrics.choices]:
-            raise serializers.ValidationError(f"Invalid metric. Must be one of: {[choice[0] for choice in LimitPoliciesMetrics.choices]}")
+    def validate_tenant_name(self, data):
+        tenant_name = data.get('tenant_name')
+        if tenant_name and Tenants.objects.filter(name=tenant_name).exists():
+            raise serializers.ValidationError("Tenant with this name already exists")
+        return data
+
+    def validate_email(self, data):
+        email = data.get('email')
+        if email and Users.objects.filter(email=email).exists():
+            raise serializers.ValidationError("User with this email already exists")
+        return data
+    
+    @transaction.atomic
+    def create(self, validated_data):
+        try:
+            tenant_name = validated_data.pop('tenant_name')
+            validated_data['password'] = make_password(validated_data['password'])
+            validated_data['role'] = Role.TENANT_USER
+            user = Users.objects.create(**validated_data)
+            tenant = Tenants.objects.get(name=tenant_name)
+            UserTenants.objects.create(user=user, tenant=tenant)
+            return user
+        except Exception as e:
+            raise serializers.ValidationError(f"Failed to create user {str(e)}")
+
+
+class TenantRegistrationSerializer(serializers.ModelSerializer):
+    tenant_name = serializers.CharField(required=True, write_only=True)
+    
+    class Meta:
+        model = Users
+        fields = ['email', 'name', 'password', 'tenant_name']
+        extra_kwargs = {'password': {'write_only': True}}
+    
+    def validate_tenant_name(self, data):
+        tenant_name = data.get('tenant_name')
+        if tenant_name and Tenants.objects.filter(name=tenant_name).exists():
+            raise serializers.ValidationError("Tenant with this name already exists")
+        return data
+
+    def validate_email(self, data):
+        email = data.get('email')
+        if email and Users.objects.filter(email=email).exists():
+            raise serializers.ValidationError("User with this email already exists")
+        return data
+    
+    @transaction.atomic
+    def create(self, validated_data):
+        tenant_name = validated_data.pop('tenant_name')
+        email = validated_data['email']
+        
+        if Users.objects.filter(email=email).exists():
+            raise serializers.ValidationError("User with this email already exists")
+        
+        validated_data['password'] = make_password(validated_data['password'])
+        validated_data['role'] = Role.TENANT_ADMIN 
+        
+        try:
+            tenant = Tenants.objects.create(name=tenant_name)
+            user = Users.objects.create(**validated_data)
+            UserTenants.objects.create(user=user, tenant=tenant)
+            return user
+        except Exception as e:
+            raise serializers.ValidationError(f"Failed to create tenant and user: {str(e)}")
+
+class AdminRegistrationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Users
+        fields = ['email', 'name', 'password']
+        extra_kwargs = {'password': {'write_only': True}}
+    
+    def validate_email(self, value):
+        if Users.objects.filter(email=value).exists():
+            raise serializers.ValidationError("User with this email already exists")
         return value
     
-    def validate_value(self, value):
-        if value < 0:
-            raise serializers.ValidationError("Value must be non-negative")
-        return value
-
-class UpdateUsageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Usages
-        fields = ['metric', 'value']
-        read_only_fields = ['id', 'created_at', 'updated_at', 'subscription_id']
-        extra_kwargs = {'metric': {'required': True}, 'value': {'required': True}}
-
+    def create(self, validated_data):
+        validated_data['password'] = make_password(validated_data['password'])
+        validated_data['role'] = Role.PLATFORM_ADMIN
+        return Users.objects.create(**validated_data)
