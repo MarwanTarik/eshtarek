@@ -16,3 +16,5 @@ This document outlines the user stories for the project, detailing the features 
 ## US7. As an admin, I want to be able to manage tenants so that I can oversee user accounts and their subscriptions.
 
 ## US8. As an admin, I want to be able to track active tenants and their usage statistics so that I can ensure the system is running smoothly and efficiently.
+
+## US9. As an admin, I want to be able to add new usage policies to the plans.
