@@ -128,18 +128,16 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         fields = ['email', 'name', 'password', 'tenant_name']
         write_only_fields = ['password']
     
-    def validate_tenant_name(self, data):
-        tenant_name = data.get('tenant_name')
-        if tenant_name and Tenants.objects.filter(name=tenant_name).exists():
-            raise serializers.ValidationError("Tenant with this name already exists")
-        return data
+    def validate_tenant_name(self, value):
+        if not value or not Tenants.objects.filter(name=value).exists():
+            raise serializers.ValidationError("Tenant with this name does not exist")
+        return value
 
-    def validate_email(self, data):
-        email = data.get('email')
-        if email and Users.objects.filter(email=email).exists():
+    def validate_email(self, value):
+        if value and Users.objects.filter(email=value).exists():
             raise serializers.ValidationError("User with this email already exists")
-        return data
-    
+        return value
+
     @transaction.atomic
     def create(self, validated_data):
         try:
@@ -161,18 +159,16 @@ class TenantRegistrationSerializer(serializers.ModelSerializer):
         model = Users
         fields = ['email', 'name', 'password', 'tenant_name']
         extra_kwargs = {'password': {'write_only': True}}
-    
-    def validate_tenant_name(self, data):
-        tenant_name = data.get('tenant_name')
-        if tenant_name and Tenants.objects.filter(name=tenant_name).exists():
-            raise serializers.ValidationError("Tenant with this name already exists")
-        return data
 
-    def validate_email(self, data):
-        email = data.get('email')
-        if email and Users.objects.filter(email=email).exists():
+    def validate_tenant_name(self, value):
+        if value and Tenants.objects.filter(name=value).exists():
+            raise serializers.ValidationError("Tenant with this name already exists")
+        return value
+
+    def validate_email(self, value):
+        if value and Users.objects.filter(email=value).exists():
             raise serializers.ValidationError("User with this email already exists")
-        return data
+        return value
     
     @transaction.atomic
     def create(self, validated_data):

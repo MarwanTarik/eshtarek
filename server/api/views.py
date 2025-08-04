@@ -1,3 +1,4 @@
+from tokenize import TokenError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
@@ -81,9 +82,14 @@ class LogoutView(APIView):
                 )
             else:
                 return Response(
-                    {"error": "Refresh token is required"}, 
+                    {"error": "token is required"}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
+        except TokenError as e:
+            return Response(
+                {"error": "refresh token is invalid or expired"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
         except Exception as e:
             return Response(
                 {"error": "Invalid token"}, 
