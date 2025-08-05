@@ -10,6 +10,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password, check_password
 from django.db import transaction
+from django.db import IntegrityError
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -39,8 +40,11 @@ class PlanSerializer(serializers.ModelSerializer):
     policy_ids = serializers.ListField(
         child=serializers.UUIDField(),
         required=True,
+        write_only=True,
         help_text="List of limit policy IDs to associate with this plan"
     )
+    
+    associated_policy_ids = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Plans
@@ -54,12 +58,18 @@ class PlanSerializer(serializers.ModelSerializer):
             'created_at', 
             'updated_at', 
             'created_by',
+            'policy_ids',
+            'associated_policy_ids',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def get_associated_policy_ids(self, obj):
+        return [str(plp.limit_policy.id) for plp in obj.plan_limit_policies.all()]
 
     def validate_billing_cycle(self, value):
-        if value not in SubscriptionsBillingCycle.values():
-            raise ValidationError(f"Invalid billing cycle: {value}. Must be one of {SubscriptionsBillingCycle.values()}.")
+        valid_choices = [choice[0] for choice in SubscriptionsBillingCycle.choices]
+        if value not in valid_choices:
+            raise ValidationError(f"Invalid billing cycle: {value}. Must be one of {valid_choices}.")
         return value
     
     def validate_billing_duration(self, value):
@@ -74,13 +84,17 @@ class PlanSerializer(serializers.ModelSerializer):
     
     @transaction.atomic
     def create(self, validated_data):
+        from django.db import IntegrityError
         policy_ids = validated_data.pop('policy_ids', [])
         plan = Plans.objects.create(**validated_data)
         
         for policy_id in policy_ids:
             try:
                 limit_policy = LimitPolicies.objects.get(id=policy_id)
-                PlansLimitPolicies.objects.create(plan=plan, limit_policy=limit_policy)
+                try:
+                    PlansLimitPolicies.objects.create(plan=plan, limit_policy=limit_policy)
+                except IntegrityError:
+                    raise ValidationError(f"Plan limit policy association already exists for plan {plan.id} and policy {policy_id}.")
             except LimitPolicies.DoesNotExist:
                 raise ValidationError(f"Limit policy with ID {policy_id} does not exist.")
         return plan
@@ -92,8 +106,9 @@ class LimitPoliciesSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def validate_metric(self, value):
-        if value not in LimitPoliciesMetrics.values():
-            raise ValidationError(f"Invalid metric: {value}. Must be one of {LimitPoliciesMetrics.values()}.")
+        valid_choices = [choice[0] for choice in LimitPoliciesMetrics.choices]
+        if value not in valid_choices:
+            raise ValidationError(f"Invalid metric: {value}. Must be one of {valid_choices}.")
         return value
     
     def validate_limit(self, value):
@@ -104,11 +119,39 @@ class LimitPoliciesSerializer(serializers.ModelSerializer):
 class PlanLimitPolicySerializer(serializers.ModelSerializer):
     plan = PlanSerializer(read_only=True)
     limit_policy = LimitPoliciesSerializer(read_only=True)
+    plan_id = serializers.UUIDField(write_only=True)
+    policy_id = serializers.UUIDField(write_only=True)
 
     class Meta:
         model = PlansLimitPolicies
-        fields = ['plan', 'limit_policy', 'created_at', 'updated_at']
+        fields = ['plan', 'limit_policy', 'plan_id', 'policy_id', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
+    
+    def create(self, validated_data):
+        plan_id = validated_data.pop('plan_id')
+        policy_id = validated_data.pop('policy_id')
+        
+        try:
+            plan = Plans.objects.get(id=plan_id)
+            limit_policy = LimitPolicies.objects.get(id=policy_id)
+        except Plans.DoesNotExist:
+            raise serializers.ValidationError(f"Plan with ID {plan_id} does not exist.")
+        except LimitPolicies.DoesNotExist:
+            raise serializers.ValidationError(f"Limit policy with ID {policy_id} does not exist.")
+        
+        if PlansLimitPolicies.objects.filter(plan=plan, limit_policy=limit_policy).exists():
+            raise serializers.ValidationError(f"Plan limit policy association already exists for plan {plan_id} and policy {policy_id}.")
+        
+        try:
+            with transaction.atomic():
+                plan_limit_policy = PlansLimitPolicies.objects.create(
+                    plan=plan,
+                    limit_policy=limit_policy
+                )
+        except IntegrityError:
+            raise serializers.ValidationError(f"Plan limit policy association already exists for plan {plan_id} and policy {policy_id}.")
+        
+        return plan_limit_policy
 
 class SubscriptionSerializer(serializers.ModelSerializer):
     plan = PlanSerializer(read_only=True)
