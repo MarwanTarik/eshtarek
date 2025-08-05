@@ -36,6 +36,12 @@ class UserTenantSerializer(serializers.ModelSerializer):
 
 
 class PlanSerializer(serializers.ModelSerializer):
+    policy_ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        required=True,
+        help_text="List of limit policy IDs to associate with this plan"
+    )
+
     class Meta:
         model = Plans
         fields = [
@@ -47,16 +53,53 @@ class PlanSerializer(serializers.ModelSerializer):
             'price', 
             'created_at', 
             'updated_at', 
-            'created_by'
+            'created_by',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def validate_billing_cycle(self, value):
+        if value not in SubscriptionsBillingCycle.values():
+            raise ValidationError(f"Invalid billing cycle: {value}. Must be one of {SubscriptionsBillingCycle.values()}.")
+        return value
+    
+    def validate_billing_duration(self, value):
+        if value <= 0:
+            raise ValidationError("Billing duration must be a positive integer.")
+        return value
+    
+    def validate_price(self, value):
+        if value < 0:
+            raise ValidationError("Price must be a non-negative number.")
+        return value
+    
+    @transaction.atomic
+    def create(self, validated_data):
+        policy_ids = validated_data.pop('policy_ids', [])
+        plan = Plans.objects.create(**validated_data)
+        
+        for policy_id in policy_ids:
+            try:
+                limit_policy = LimitPolicies.objects.get(id=policy_id)
+                PlansLimitPolicies.objects.create(plan=plan, limit_policy=limit_policy)
+            except LimitPolicies.DoesNotExist:
+                raise ValidationError(f"Limit policy with ID {policy_id} does not exist.")
+        return plan
 
 class LimitPoliciesSerializer(serializers.ModelSerializer):
     class Meta:
         model = LimitPolicies
         fields = ['id', 'metric', 'limit', 'created_at', 'updated_at', 'created_by']
-        read_only_fields = ['id', 'created_at', 'updated_at', 'created_by']
+        read_only_fields = ['id', 'created_at', 'updated_at']
 
+    def validate_metric(self, value):
+        if value not in LimitPoliciesMetrics.values():
+            raise ValidationError(f"Invalid metric: {value}. Must be one of {LimitPoliciesMetrics.values()}.")
+        return value
+    
+    def validate_limit(self, value):
+        if value <= 0:
+            raise ValidationError("Limit must be a positive integer.")
+        return value
 
 class PlanLimitPolicySerializer(serializers.ModelSerializer):
     plan = PlanSerializer(read_only=True)
