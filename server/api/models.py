@@ -102,9 +102,6 @@ class LimitPolicies(models.Model):
         db_table = 'limit_policies'
         verbose_name = 'Limit Policy'
         verbose_name_plural = 'Limit Policies'
-        constraints = [
-            models.UniqueConstraint(fields=['metric'], name='unique_limit_policy_metric_constraint')
-        ]
         indexes = [
             models.Index(fields=['metric'], name='metric_index')
         ]
@@ -123,8 +120,11 @@ class PlansLimitPolicies(models.Model):
         db_table = 'plans_limit_policies'
         verbose_name = 'Plan Limit Policy'
         verbose_name_plural = 'Plan Limit Policies'
+        constraints = [
+            models.UniqueConstraint(fields=['plan', 'limit_policy'], name='unique_plan_limit_policy_constraint')
+        ]
         unique_together = (('plan', 'limit_policy'),)
-    
+
     def __str__(self):
         return 'Plan: {}, Limit Policy: {}'.format(self.plan.name, self.limit_policy.metric)
     
