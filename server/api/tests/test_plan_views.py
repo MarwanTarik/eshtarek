@@ -58,7 +58,6 @@ class PlanViewTests(AuthAPITests):
             'billing_duration': 1,
             'price': 299.99,
             'policy_ids': [str(self.limit_policy1.id), str(self.limit_policy2.id)],
-            'created_by': self.test_admin.id
         }
         self.client.credentials(HTTP_AUTHORIZATION=self.get_admin_auth_header())
         response = self.client.post(url, data, format='json')

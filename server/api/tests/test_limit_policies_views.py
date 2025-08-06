@@ -35,7 +35,6 @@ class LimitPoliciesViewTests(AuthAPITests):
         data = {
             'metric': LimitPoliciesMetrics.MAX_USERS.value,
             'limit': 100,
-            'created_by': self.test_admin.id 
         }
         
         self.client.credentials(HTTP_AUTHORIZATION=self.get_admin_auth_header())

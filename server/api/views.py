@@ -5,68 +5,77 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
-from .permissions import IsAdmin
+from .permissions import IsAdmin, IsTenantAdmin, IsAdminOrTenantAdmin
 from .serializers import *
+from .enums.subscriptions_status import SubscriptionsStatus
 
 # Create your views here.
 class UserRegistrationView(APIView):    
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = UserRegistrationSerializer(data=request.data)
-        
-        if serializer.is_valid():
-            user = serializer.save()
+        try:
+            serializer = UserRegistrationSerializer(data=request.data)
             
-            token_serializer = CustomTokenObtainPairSerializer()
-            refresh = token_serializer.get_token(user)
+            if serializer.is_valid():
+                user = serializer.save()
+                
+                token_serializer = CustomTokenObtainPairSerializer()
+                refresh = token_serializer.get_token(user)
+                
+                return Response({
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                }, status=status.HTTP_201_CREATED)
             
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            }, status=status.HTTP_201_CREATED)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class TenantRegistrationView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = TenantRegistrationSerializer(data=request.data)
-        
-        if serializer.is_valid():
-            user = serializer.save()
+        try:
+            serializer = TenantRegistrationSerializer(data=request.data)
             
-            token_serializer = CustomTokenObtainPairSerializer()
-            refresh = token_serializer.get_token(user)
+            if serializer.is_valid():
+                user = serializer.save()
+                
+                token_serializer = CustomTokenObtainPairSerializer()
+                refresh = token_serializer.get_token(user)
+                
+                return Response({
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                }, status=status.HTTP_201_CREATED)
             
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            }, status=status.HTTP_201_CREATED)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AdminRegistrationView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = AdminRegistrationSerializer(data=request.data)
-        
-        if serializer.is_valid():
-            user = serializer.save()
+        try:
+            serializer = AdminRegistrationSerializer(data=request.data)
             
-            token_serializer = CustomTokenObtainPairSerializer()
-            refresh = token_serializer.get_token(user)
+            if serializer.is_valid():
+                user = serializer.save()
+                
+                token_serializer = CustomTokenObtainPairSerializer()
+                refresh = token_serializer.get_token(user)
+                
+                return Response({
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                }, status=status.HTTP_201_CREATED)
             
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            }, status=status.HTTP_201_CREATED)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST) 
 
 
 class LogoutView(APIView):
@@ -102,51 +111,61 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = CustomTokenObtainPairSerializer(data=request.data)
-        
-        if serializer.is_valid():
-            token_data = serializer.validated_data
-            return Response(token_data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            serializer = CustomTokenObtainPairSerializer(data=request.data)
+            
+            if serializer.is_valid():
+                token_data = serializer.validated_data
+                return Response(token_data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
 
 class PlanView(APIView):
     permission_classes = [IsAuthenticated, IsAdmin]
 
     def post(self, request):
-        serializer = PlanSerializer(data=request.data)
-        if serializer.is_valid():
-            plan = serializer.save(created_by=request.user)
-            return Response(PlanSerializer(plan).data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try: 
+            serializer = PlanSerializer(data=request.data, context={'request': request})
+            if serializer.is_valid():
+                plan = serializer.save()
+                return Response(PlanSerializer(plan).data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
 
     def get(self, request, pk=None):
-        if pk:
-            try:
+        try:
+            if pk:
+                
                 plan = Plans.objects.get(pk=pk)
-            except Plans.DoesNotExist:
-                return Response({"error": "Plan not found"}, status=status.HTTP_404_NOT_FOUND)
-            
-            serializer = PlanSerializer(plan)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            plans = Plans.objects.all()
-            serializer = PlanSerializer(plans, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+                
+                serializer = PlanSerializer(plan)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                plans = Plans.objects.all()
+                serializer = PlanSerializer(plans, many=True)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+        except Plans.DoesNotExist:
+            return Response({"error": "Plan not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
     def put(self, request, pk):
         try:
             plan = Plans.objects.get(pk=pk)
+            serializer = PlanSerializer(plan, data=request.data, partial=True)
+            if serializer.is_valid():
+                updated_plan = serializer.save()
+                return Response(PlanSerializer(updated_plan).data, status=status.HTTP_200_OK)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Plans.DoesNotExist:
             return Response({"error": "Plan not found"}, status=status.HTTP_404_NOT_FOUND)
-        
-        serializer = PlanSerializer(plan, data=request.data, partial=True)
-        if serializer.is_valid():
-            updated_plan = serializer.save()
-            return Response(PlanSerializer(updated_plan).data, status=status.HTTP_200_OK)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self, request, pk):
         try:
@@ -161,25 +180,30 @@ class LimitPoliciesView(APIView):
     permission_classes = [IsAuthenticated, IsAdmin]
 
     def post(self, request):
-        serializer = LimitPoliciesSerializer(data=request.data)
-        if serializer.is_valid():
-            limit_policy = serializer.save(created_by=request.user)
-            return Response(LimitPoliciesSerializer(limit_policy).data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            serializer = LimitPoliciesSerializer(data=request.data, context={'request': request})
+            if serializer.is_valid():
+                limit_policy = serializer.save()
+                return Response(LimitPoliciesSerializer(limit_policy).data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request, pk=None):
-        if pk:
-            try:
+        try:
+            if pk:
                 limit_policy = LimitPolicies.objects.get(pk=pk)
-            except LimitPolicies.DoesNotExist:
-                return Response({"error": "Limit policy not found"}, status=status.HTTP_404_NOT_FOUND)
-            
-            serializer = LimitPoliciesSerializer(limit_policy)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            limit_policies = LimitPolicies.objects.all()
-            serializer = LimitPoliciesSerializer(limit_policies, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+                
+                serializer = LimitPoliciesSerializer(limit_policy)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                limit_policies = LimitPolicies.objects.all()
+                serializer = LimitPoliciesSerializer(limit_policies, many=True)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+        except LimitPolicies.DoesNotExist:
+            return Response({"error": "Limit policy not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, pk):
         try:
@@ -226,4 +250,63 @@ class PlanLimitPolicyView(APIView):
                 return Response(PlanLimitPolicySerializer(plan_limit_policy).data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+class SubscriptionView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminOrTenantAdmin]
+
+    def post(self, request):
+        if not request.user.role == Role.TENANT_ADMIN.value:
+            return Response({"error": "Only tenant admins can create subscriptions."}, status=status.HTTP_403_FORBIDDEN)    
+        try:
+            serializer = SubscriptionSerializer(data=request.data, context={'request': request})
+            if serializer.is_valid():
+                subscription = serializer.save()
+                return Response(SubscriptionSerializer(subscription).data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request, pk=None):
+        try:
+            if pk:
+                subscription = Subscriptions.objects.get(pk=pk)
+                
+                serializer = SubscriptionSerializer(subscription)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                subscriptions = Subscriptions.objects.all()
+                serializer = SubscriptionSerializer(subscriptions, many=True)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+        except Subscriptions.DoesNotExist:
+            return Response({"error": "Subscription not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def put(self, request, pk):
+        try:
+            subscription = Subscriptions.objects.get(pk=pk)
+    
+            serializer = SubscriptionSerializer(subscription, data=request.data, partial=True)
+            if serializer.is_valid():
+                updated_subscription = serializer.save()
+                return Response(SubscriptionSerializer(updated_subscription).data, status=status.HTTP_200_OK)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Subscriptions.DoesNotExist:
+            return Response({"error": "Subscription not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+
+    def delete(self, request, pk):
+        try:
+            subscription = Subscriptions.objects.get(pk=pk)
+            new_subscription_status = SubscriptionsStatus.CANCELLED
+            subscription.status = new_subscription_status
+            subscription.save()
+            return Response({"message": "Subscription deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        except Subscriptions.DoesNotExist:
+            return Response({"error": "Subscription not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:  
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
