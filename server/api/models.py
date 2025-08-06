@@ -136,27 +136,27 @@ class Subscriptions(models.Model):
     ended_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    created_by_user_id = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='created_subscriptions')
-    plan_id = models.ForeignKey(Plans, on_delete=models.CASCADE, related_name='plan_subscriptions')
-    tenant_id = models.ForeignKey(Tenants, on_delete=models.CASCADE, related_name='tenant_subscriptions')
+    created_by_user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='created_subscriptions')
+    plan = models.ForeignKey(Plans, on_delete=models.CASCADE, related_name='plan_subscriptions')
+    tenant = models.ForeignKey(Tenants, on_delete=models.CASCADE, related_name='tenant_subscriptions')
 
     class Meta:
         db_table = 'subscriptions'
         verbose_name = 'Subscription'
         verbose_name_plural = 'Subscriptions'
         constraints = [
-            models.UniqueConstraint(fields=['created_by_user_id', 'plan_id', 'tenant_id'], name='unique_subscription_constraint')
+            models.UniqueConstraint(fields=['created_by_user', 'plan', 'tenant'], name='unique_subscription_constraint')
         ]
         indexes = [
             models.Index(fields=['status'], name='status_index'),
-            models.Index(fields=['created_by_user_id'], name='created_by_user_index'),
-            models.Index(fields=['plan_id'], name='plan_index'),
-            models.Index(fields=['tenant_id'], name='tenant_index')
+            models.Index(fields=['created_by_user'], name='created_by_user_index'),
+            models.Index(fields=['plan'], name='plan_index'),
+            models.Index(fields=['tenant'], name='tenant_index')
         ]
     
     def __str__(self):
         return 'Subscription: {}, Status: {}, Plan: {}, Tenant: {}'.format(
-            self.id, self.status, self.plan_id.name, self.tenant_id.name
+            self.id, self.status, self.plan.name, self.tenant.name
         )
     
 class Usages(models.Model):
@@ -165,18 +165,18 @@ class Usages(models.Model):
     value = models.PositiveIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    subscription_id = models.ForeignKey(Subscriptions, on_delete=models.CASCADE, related_name='subscription_usages')
+    subscription = models.ForeignKey(Subscriptions, on_delete=models.CASCADE, related_name='subscription_usages')
 
     class Meta:
         db_table = 'usages'
         verbose_name = 'Usage'
         verbose_name_plural = 'Usages'
         constraints = [
-            models.UniqueConstraint(fields=['subscription_id', 'metric'], name='unique_usage_constraint')
+            models.UniqueConstraint(fields=['subscription', 'metric'], name='unique_usage_constraint')
         ]
         indexes = [
             models.Index(fields=['metric'], name='usage_metric_index'),
-            models.Index(fields=['subscription_id'], name='usage_subscription_index')
+            models.Index(fields=['subscription'], name='usage_subscription_index')
         ]
     
     def __str__(self):

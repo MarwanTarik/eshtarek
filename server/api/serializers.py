@@ -1,3 +1,5 @@
+from datetime import timedelta
+from django.utils import timezone
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
 from .models import *
@@ -61,8 +63,8 @@ class PlanSerializer(serializers.ModelSerializer):
             'policy_ids',
             'associated_policy_ids',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
-    
+        read_only_fields = ['id', 'created_at', 'updated_at', 'created_by']
+
     def get_associated_policy_ids(self, obj):
         return [str(plp.limit_policy.id) for plp in obj.plan_limit_policies.all()]
 
@@ -84,10 +86,14 @@ class PlanSerializer(serializers.ModelSerializer):
     
     @transaction.atomic
     def create(self, validated_data):
-        from django.db import IntegrityError
-        policy_ids = validated_data.pop('policy_ids', [])
-        plan = Plans.objects.create(**validated_data)
+        if not self.context['request'].user.is_authenticated:
+            raise serializers.ValidationError("Authentication required")
         
+        policy_ids = validated_data.pop('policy_ids', [])
+        user_id = self.context['request'].user.id
+
+        plan = Plans.objects.create(**validated_data, created_by_id=user_id)
+      
         for policy_id in policy_ids:
             try:
                 limit_policy = LimitPolicies.objects.get(id=policy_id)
@@ -103,7 +109,7 @@ class LimitPoliciesSerializer(serializers.ModelSerializer):
     class Meta:
         model = LimitPolicies
         fields = ['id', 'metric', 'limit', 'created_at', 'updated_at', 'created_by']
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'created_by']
 
     def validate_metric(self, value):
         valid_choices = [choice[0] for choice in LimitPoliciesMetrics.choices]
@@ -115,6 +121,20 @@ class LimitPoliciesSerializer(serializers.ModelSerializer):
         if value <= 0:
             raise ValidationError("Limit must be a positive integer.")
         return value
+    
+    @transaction.atomic
+    def create(self, validated_data):
+        if not self.context['request'].user.is_authenticated:
+            raise serializers.ValidationError("Authentication required")
+        
+        user_id = self.context['request'].user.id
+        
+        try:
+            limit_policy = LimitPolicies.objects.create(**validated_data, created_by_id=user_id)
+        except IntegrityError:
+            raise serializers.ValidationError("Limit policy with this metric already exists.")
+        
+        return limit_policy
 
 class PlanLimitPolicySerializer(serializers.ModelSerializer):
     plan = PlanSerializer(read_only=True)
@@ -156,14 +176,79 @@ class PlanLimitPolicySerializer(serializers.ModelSerializer):
 class SubscriptionSerializer(serializers.ModelSerializer):
     plan = PlanSerializer(read_only=True)
     tenant = TenantSerializer(read_only=True)
+    plan_id = serializers.UUIDField(write_only=True)
 
     class Meta:
         model = Subscriptions
-        fields = ['id', 'plan', 'tenant', 'status', 'started_at', 'ended_at', 'created_at', 'updated_at', 'created_by_user_id']
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        fields = [
+            'id', 
+            'plan', 
+            'tenant', 
+            'status', 
+            'started_at', 
+            'ended_at', 
+            'created_at', 
+            'updated_at', 
+            'created_by_user_id',
+            'plan_id'
+        ]
+        read_only_fields = [
+            'id', 
+            'created_at', 
+            'updated_at', 
+            'created_by_user_id', 
+            'status', 
+            'started_at', 
+            'ended_at',
+            'tenant',
+        ]
 
+    def validate_status(self, value):
+        valid_choices = [choice[0] for choice in SubscriptionsStatus.choices]
+        if value not in valid_choices:
+            raise ValidationError(f"Invalid status: {value}. Must be one of {valid_choices}.")
+        return value
+    
+    @transaction.atomic
+    def create(self, validated_data):
+        if not self.context['request'].user.is_authenticated:
+            raise serializers.ValidationError("Authentication required")
+        
+        plan_id = validated_data.pop('plan_id')
+        user_id = self.context['request'].user.id
+        tenant_id = UserTenants.objects.get(user_id=user_id).tenant.id
 
+        try:
+            plan = Plans.objects.get(id=plan_id)
+            tenant = Tenants.objects.get(id=tenant_id)
+        except Plans.DoesNotExist:
+            raise serializers.ValidationError(f"Plan with ID {plan_id} does not exist.")
+        except Tenants.DoesNotExist:
+            raise serializers.ValidationError(f"Tenant with ID {tenant_id} does not exist.")
+        
+        if Subscriptions.objects.filter(plan=plan, tenant=tenant).exists():
+            raise serializers.ValidationError(f"Subscription already exists for plan {plan_id} and tenant {tenant_id}.")
+        
+    
+        started_at = timezone.now()
+        if plan.billing_cycle == SubscriptionsBillingCycle.ANNUALLY:
+            ended_at = started_at + timedelta(days=365 * plan.billing_duration)
+        elif plan.billing_cycle == SubscriptionsBillingCycle.MONTHLY:
+            ended_at = started_at + timedelta(weeks=4 * plan.billing_duration)
+        else:
+            raise serializers.ValidationError(f"Invalid billing cycle: {plan.billing_cycle}")
 
+        subscription = Subscriptions.objects.create(
+            plan=plan,
+            tenant=tenant,
+            status=SubscriptionsStatus.ACTIVE,
+            created_by_user_id=tenant_id,
+            started_at=started_at,
+            ended_at=ended_at,
+            **validated_data
+        )
+        return subscription
+    
 class UsagesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usages
@@ -290,3 +375,4 @@ class AdminRegistrationSerializer(serializers.ModelSerializer):
         validated_data['password'] = make_password(validated_data['password'])
         validated_data['role'] = Role.PLATFORM_ADMIN
         return Users.objects.create(**validated_data)
+
