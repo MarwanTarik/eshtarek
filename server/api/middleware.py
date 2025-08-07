@@ -66,7 +66,6 @@ class PostgreSQLRLSMiddleware(MiddlewareMixin):
                 
         except Exception as e:
             logger.error(f"Error resetting session variables: {str(e)}")
-            # Don't re-raise - let the middleware continue processing
     
     def _set_user_session_variables(self, user):
         """
@@ -91,7 +90,6 @@ class PostgreSQLRLSMiddleware(MiddlewareMixin):
                 
         except Exception as e:
             logger.error(f"Error setting session variables for user {user.id}: {str(e)}")
-            # Don't re-raise - let the middleware continue processing
 
 class RLSDebugMiddleware(MiddlewareMixin):
     """
