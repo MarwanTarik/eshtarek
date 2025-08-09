@@ -87,8 +87,7 @@ export interface Plan extends BaseModel {
   billing_cycle: SubscriptionsBillingCycle
   billing_duration: number
   price: number
-  created_by: string
-  associated_policy_ids: Array<string>
+  associated_policies: Array<LimitPolicy>
 }
 
 export interface PlanCreateRequest {

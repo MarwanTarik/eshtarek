@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import type { LoginRequest } from '@/app/types'
+import type {LoginRequest} from '@/app/types';
+import {  Role } from '@/app/types'
 import { LoginMutationOptions } from '@/app/authentication'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -60,9 +61,15 @@ export function LoginForm({
     }
 
     try {
-      await loginMutation.mutateAsync(formData)
-      console.log('Login successful:')
-      // TODO: Handle successful login (e.g., redirect to dashboard)
+      const response = await loginMutation.mutateAsync(formData)
+
+      const token = response.access
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      const role = payload.role
+      
+      if (role === Role.PLATFORM_ADMIN) {
+        window.location.href = '/admin-dashboard'
+      }
     } catch (error) {
       console.error('Login failed:')
       // TODO: Handle login error (e.g., show error message)

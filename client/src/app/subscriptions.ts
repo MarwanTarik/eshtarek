@@ -1,6 +1,5 @@
 import { mutationOptions, queryOptions } from '@tanstack/react-query'
 import type {
-  ApiResponse,
   Subscription,
   SubscriptionCreateRequest,
   SubscriptionUpdateRequest,
@@ -8,35 +7,35 @@ import type {
 import { apiClient } from '@/lib/api-client'
 
 export const SubscriptionsQueryOptions = queryOptions<
-  ApiResponse<Array<Subscription>>,
+  Array<Subscription>,
   Error
 >({
   queryKey: ['subscriptions', 'all'],
   queryFn: async () => {
-    return await apiClient.get<ApiResponse<Array<Subscription>>>(
+    return await apiClient.get<Array<Subscription>>(
       '/api/subscriptions',
     )
   },
 })
 
 export const SubscriptionQueryOptions = (subscriptionId: string) =>
-  queryOptions<ApiResponse<Subscription>, Error>({
+  queryOptions<Subscription, Error>({
     queryKey: ['subscriptions', subscriptionId],
     queryFn: async () => {
-      return await apiClient.get<ApiResponse<Subscription>>(
+      return await apiClient.get<Subscription>(
         `/api/subscriptions/${subscriptionId}`,
       )
     },
   })
 
 export const CreateSubscriptionMutationOptions = mutationOptions<
-  ApiResponse<Subscription>,
+  Subscription,
   Error,
   SubscriptionCreateRequest
 >({
   mutationKey: ['subscriptions', 'create'],
   mutationFn: async (subscription) => {
-    return await apiClient.post<ApiResponse<Subscription>>(
+    return await apiClient.post<Subscription>(
       '/api/subscriptions',
       subscription,
     )
@@ -44,10 +43,10 @@ export const CreateSubscriptionMutationOptions = mutationOptions<
 })
 
 export const UpdateSubscriptionMutationOptions = (subscriptionId: string) =>
-  mutationOptions<ApiResponse<Subscription>, Error, SubscriptionUpdateRequest>({
+  mutationOptions<Subscription, Error, SubscriptionUpdateRequest>({
     mutationKey: ['subscriptions', 'update'],
     mutationFn: async (data) => {
-      return await apiClient.put<ApiResponse<Subscription>>(
+      return await apiClient.put<Subscription>(
         `/api/subscriptions/${subscriptionId}`,
         data,
       )
@@ -55,10 +54,10 @@ export const UpdateSubscriptionMutationOptions = (subscriptionId: string) =>
   })
 
 export const DeleteSubscriptionMutationOptions = (subscriptionId: string) =>
-  mutationOptions<ApiResponse<null>, Error>({
+  mutationOptions<null, Error>({
     mutationKey: ['subscriptions', 'delete'],
     mutationFn: async () => {
-      return await apiClient.delete<ApiResponse<null>>(
+      return await apiClient.delete<null>(
         `/api/subscriptions/${subscriptionId}`,
       )
     },
