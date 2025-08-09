@@ -130,6 +130,9 @@ class PlanView(APIView):
             serializer = PlanSerializer(data=request.data, context={'request': request})
             if serializer.is_valid():
                 plan = serializer.save()
+                plan = Plans.objects.prefetch_related(
+                    'plan_limit_policies__limit_policy'
+                ).get(pk=plan.pk)
                 return Response(PlanSerializer(plan).data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
@@ -140,12 +143,16 @@ class PlanView(APIView):
         try:
             if pk:
                 
-                plan = Plans.objects.get(pk=pk)
+                plan = Plans.objects.prefetch_related(
+                    'plan_limit_policies__limit_policy'
+                ).get(pk=pk)
                 
                 serializer = PlanSerializer(plan)
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
-                plans = Plans.objects.all()
+                plans = Plans.objects.prefetch_related(
+                    'plan_limit_policies__limit_policy'
+                ).all()
                 serializer = PlanSerializer(plans, many=True)
                 return Response(serializer.data, status=status.HTTP_200_OK)
         except Plans.DoesNotExist:
@@ -155,10 +162,15 @@ class PlanView(APIView):
     
     def put(self, request, pk):
         try:
-            plan = Plans.objects.get(pk=pk)
+            plan = Plans.objects.prefetch_related(
+                'plan_limit_policies__limit_policy'
+            ).get(pk=pk)
             serializer = PlanSerializer(plan, data=request.data, partial=True)
             if serializer.is_valid():
                 updated_plan = serializer.save()
+                updated_plan = Plans.objects.prefetch_related(
+                    'plan_limit_policies__limit_policy'
+                ).get(pk=updated_plan.pk)
                 return Response(PlanSerializer(updated_plan).data, status=status.HTTP_200_OK)
             
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -92,7 +92,7 @@ class Plans(models.Model):
 
 class LimitPolicies(models.Model):
     id = models.UUIDField(auto_created=True, primary_key=True, default=uuid.uuid4, editable=False)
-    metric = models.CharField(max_length=50, choices=LimitPoliciesMetrics.choices)
+    metric = models.CharField(max_length=100)
     limit = models.PositiveIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

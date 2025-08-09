@@ -47,6 +47,7 @@ class PlanSerializer(serializers.ModelSerializer):
     )
     
     associated_policy_ids = serializers.SerializerMethodField(read_only=True)
+    associated_policies = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Plans
@@ -62,11 +63,16 @@ class PlanSerializer(serializers.ModelSerializer):
             'created_by',
             'policy_ids',
             'associated_policy_ids',
+            'associated_policies',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'created_by']
 
     def get_associated_policy_ids(self, obj):
         return [str(plp.limit_policy.id) for plp in obj.plan_limit_policies.all()]
+    
+    def get_associated_policies(self, obj):
+        policies = [plp.limit_policy for plp in obj.plan_limit_policies.select_related('limit_policy').all()]
+        return LimitPoliciesSerializer(policies, many=True).data
 
     def validate_billing_cycle(self, value):
         valid_choices = [choice[0] for choice in SubscriptionsBillingCycle.choices]
@@ -105,17 +111,34 @@ class PlanSerializer(serializers.ModelSerializer):
                 raise ValidationError(f"Limit policy with ID {policy_id} does not exist.")
         return plan
 
+    @transaction.atomic  
+    def update(self, instance, validated_data):
+        policy_ids = validated_data.pop('policy_ids', None)
+        
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        if policy_ids is not None:
+            instance.plan_limit_policies.all().delete()
+            
+            for policy_id in policy_ids:
+                try:
+                    limit_policy = LimitPolicies.objects.get(id=policy_id)
+                    try:
+                        PlansLimitPolicies.objects.create(plan=instance, limit_policy=limit_policy)
+                    except IntegrityError:
+                        raise ValidationError(f"Plan limit policy association already exists for plan {instance.id} and policy {policy_id}.")
+                except LimitPolicies.DoesNotExist:
+                    raise ValidationError(f"Limit policy with ID {policy_id} does not exist.")
+        
+        return instance
+
 class LimitPoliciesSerializer(serializers.ModelSerializer):
     class Meta:
         model = LimitPolicies
         fields = ['id', 'metric', 'limit', 'created_at', 'updated_at', 'created_by']
         read_only_fields = ['id', 'created_at', 'updated_at', 'created_by']
-
-    def validate_metric(self, value):
-        valid_choices = [choice[0] for choice in LimitPoliciesMetrics.choices]
-        if value not in valid_choices:
-            raise ValidationError(f"Invalid metric: {value}. Must be one of {valid_choices}.")
-        return value
     
     def validate_limit(self, value):
         if value <= 0:
