@@ -13,9 +13,9 @@ from .views import (
 )
 
 urlpatterns = [
-    path('auth/register/user/', UserRegistrationView.as_view(), name='user_registration'),
-    path('auth/register/tenant/', TenantRegistrationView.as_view(), name='tenant_registration'),
-    path('auth/register/admin/', AdminRegistrationView.as_view(), name='admin_registration'),
+    path('user/auth/register/', UserRegistrationView.as_view(), name='user_registration'),
+    path('tenant/auth/register/', TenantRegistrationView.as_view(), name='tenant_registration'),
+    path('admin/auth/register/', AdminRegistrationView.as_view(), name='admin_registration'),
     path('auth/logout/', LogoutView.as_view(), name='logout'),
     path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
