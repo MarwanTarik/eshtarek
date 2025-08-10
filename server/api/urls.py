@@ -24,6 +24,6 @@ urlpatterns = [
     path('limit-policies/', LimitPoliciesView.as_view(), name='limit_policies_view'),
     path('limit-policies/<uuid:pk>/', LimitPoliciesView.as_view(), name='limit_policy_detail'),
     path('plans-limit-policies/', PlanLimitPolicyView.as_view(), name='plans_limit_policies_view'),
-    path('subscription/', SubscriptionView.as_view(), name='subscription_view'),
-    path('subscription/<uuid:pk>/', SubscriptionView.as_view(), name='subscription_detail'),
+    path('subscriptions/', SubscriptionView.as_view(), name='subscription_view'),
+    path('subscriptions/<uuid:pk>/', SubscriptionView.as_view(), name='subscription_detail'),
 ]
