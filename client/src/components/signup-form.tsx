@@ -1,15 +1,11 @@
 import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
+import { Link, useRouter } from '@tanstack/react-router'
+import { useAuth } from '@/hooks/use-auth'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  AdminRegistrationMutationOptions,
-  TenantRegistrationMutationOptions,
-} from '@/app/authentication'
 import { Role } from '@/app/types'
 
 interface FieldConfig {
@@ -61,27 +57,20 @@ const roleFieldMap: Record<
   ],
 }
 
-const roleMutationOptionsMap: Record<
-  Role.TENANT_ADMIN | Role.PLATFORM_ADMIN,
-  any
-> = {
-  [Role.TENANT_ADMIN]: TenantRegistrationMutationOptions,
-  [Role.PLATFORM_ADMIN]: AdminRegistrationMutationOptions,
-}
-
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<'div'>) {
+  const router = useRouter()
+  const { signup, isLoading } = useAuth()
   const [role, setRole] = useState<Role.TENANT_ADMIN | Role.PLATFORM_ADMIN>(
     Role.TENANT_ADMIN,
   )
   const [formData, setFormData] = useState<Record<string, string>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [signupError, setSignupError] = useState<string | null>(null)
 
   const fields = roleFieldMap[role]
-  const mutationOptions = roleMutationOptionsMap[role]
-  const signupMutation = useMutation(mutationOptions)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -131,12 +120,14 @@ export function SignupForm({
     }
 
     try {
-      await signupMutation.mutateAsync(formData as any)
-      console.log('Registration successful:')
-      // TODO: Handle successful registration
+      setSignupError(null)
+      await signup(formData, role)
+      console.log('Registration successful')
+      // Redirect to login page after successful registration
+      router.navigate({ to: '/login' })
     } catch (error) {
-      console.error('Registration failed:')
-      // TODO: Handle registration error
+      console.error('Registration failed:', error)
+      setSignupError('Registration failed. Please check your information and try again.')
     }
   }
 
@@ -154,7 +145,7 @@ export function SignupForm({
                     value={role}
                     onChange={handleRoleChange}
                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                    disabled={signupMutation.isPending}
+                    disabled={isLoading}
                   >
                     <option value={Role.TENANT_ADMIN}>Tenant Admin</option>
                     <option value={Role.PLATFORM_ADMIN}>Platform Admin</option>
@@ -172,7 +163,7 @@ export function SignupForm({
                       value={formData[field.name] || ''}
                       onChange={handleChange}
                       required
-                      disabled={signupMutation.isPending}
+                      disabled={isLoading}
                     />
                     {errors[field.name] && (
                       <span className="text-sm text-red-500">
@@ -182,19 +173,18 @@ export function SignupForm({
                   </div>
                 ))}
 
-                {signupMutation.error && (
+                {signupError && (
                   <div className="text-sm text-red-500">
-                    Registration failed. Please check your information and try
-                    again.
+                    {signupError}
                   </div>
                 )}
 
                 <Button
                   type="submit"
                   className="w-full bg-purple-500 hover:bg-purple-400"
-                  disabled={signupMutation.isPending}
+                  disabled={isLoading}
                 >
-                  {signupMutation.isPending
+                  {isLoading
                     ? 'Creating account...'
                     : 'Create account'}
                 </Button>

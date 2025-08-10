@@ -9,32 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as UsagesRouteImport } from './routes/usages'
-import { Route as SubscriptionsRouteImport } from './routes/subscriptions'
 import { Route as SignupRouteImport } from './routes/signup'
-import { Route as PlansRouteImport } from './routes/plans'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as AdminDashboardRouteImport } from './routes/admin-dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminUsagesRouteImport } from './routes/admin/usages'
+import { Route as AdminSubscriptionsRouteImport } from './routes/admin/subscriptions'
+import { Route as AdminPlansRouteImport } from './routes/admin/plans'
+import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 
-const UsagesRoute = UsagesRouteImport.update({
-  id: '/usages',
-  path: '/usages',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SubscriptionsRoute = SubscriptionsRouteImport.update({
-  id: '/subscriptions',
-  path: '/subscriptions',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PlansRoute = PlansRouteImport.update({
-  id: '/plans',
-  path: '/plans',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -42,113 +27,107 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminDashboardRoute = AdminDashboardRouteImport.update({
-  id: '/admin-dashboard',
-  path: '/admin-dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminUsagesRoute = AdminUsagesRouteImport.update({
+  id: '/admin/usages',
+  path: '/admin/usages',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSubscriptionsRoute = AdminSubscriptionsRouteImport.update({
+  id: '/admin/subscriptions',
+  path: '/admin/subscriptions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPlansRoute = AdminPlansRouteImport.update({
+  id: '/admin/plans',
+  path: '/admin/plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
+  id: '/admin/dashboard',
+  path: '/admin/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin-dashboard': typeof AdminDashboardRoute
   '/login': typeof LoginRoute
-  '/plans': typeof PlansRoute
   '/signup': typeof SignupRoute
-  '/subscriptions': typeof SubscriptionsRoute
-  '/usages': typeof UsagesRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/plans': typeof AdminPlansRoute
+  '/admin/subscriptions': typeof AdminSubscriptionsRoute
+  '/admin/usages': typeof AdminUsagesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin-dashboard': typeof AdminDashboardRoute
   '/login': typeof LoginRoute
-  '/plans': typeof PlansRoute
   '/signup': typeof SignupRoute
-  '/subscriptions': typeof SubscriptionsRoute
-  '/usages': typeof UsagesRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/plans': typeof AdminPlansRoute
+  '/admin/subscriptions': typeof AdminSubscriptionsRoute
+  '/admin/usages': typeof AdminUsagesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin-dashboard': typeof AdminDashboardRoute
   '/login': typeof LoginRoute
-  '/plans': typeof PlansRoute
   '/signup': typeof SignupRoute
-  '/subscriptions': typeof SubscriptionsRoute
-  '/usages': typeof UsagesRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/plans': typeof AdminPlansRoute
+  '/admin/subscriptions': typeof AdminSubscriptionsRoute
+  '/admin/usages': typeof AdminUsagesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/admin-dashboard'
     | '/login'
-    | '/plans'
     | '/signup'
-    | '/subscriptions'
-    | '/usages'
+    | '/admin/dashboard'
+    | '/admin/plans'
+    | '/admin/subscriptions'
+    | '/admin/usages'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin-dashboard'
     | '/login'
-    | '/plans'
     | '/signup'
-    | '/subscriptions'
-    | '/usages'
+    | '/admin/dashboard'
+    | '/admin/plans'
+    | '/admin/subscriptions'
+    | '/admin/usages'
   id:
     | '__root__'
     | '/'
-    | '/admin-dashboard'
     | '/login'
-    | '/plans'
     | '/signup'
-    | '/subscriptions'
-    | '/usages'
+    | '/admin/dashboard'
+    | '/admin/plans'
+    | '/admin/subscriptions'
+    | '/admin/usages'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminDashboardRoute: typeof AdminDashboardRoute
   LoginRoute: typeof LoginRoute
-  PlansRoute: typeof PlansRoute
   SignupRoute: typeof SignupRoute
-  SubscriptionsRoute: typeof SubscriptionsRoute
-  UsagesRoute: typeof UsagesRoute
+  AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminPlansRoute: typeof AdminPlansRoute
+  AdminSubscriptionsRoute: typeof AdminSubscriptionsRoute
+  AdminUsagesRoute: typeof AdminUsagesRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/usages': {
-      id: '/usages'
-      path: '/usages'
-      fullPath: '/usages'
-      preLoaderRoute: typeof UsagesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/subscriptions': {
-      id: '/subscriptions'
-      path: '/subscriptions'
-      fullPath: '/subscriptions'
-      preLoaderRoute: typeof SubscriptionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/signup': {
       id: '/signup'
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/plans': {
-      id: '/plans'
-      path: '/plans'
-      fullPath: '/plans'
-      preLoaderRoute: typeof PlansRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -158,13 +137,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin-dashboard': {
-      id: '/admin-dashboard'
-      path: '/admin-dashboard'
-      fullPath: '/admin-dashboard'
-      preLoaderRoute: typeof AdminDashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -172,17 +144,45 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/usages': {
+      id: '/admin/usages'
+      path: '/admin/usages'
+      fullPath: '/admin/usages'
+      preLoaderRoute: typeof AdminUsagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/subscriptions': {
+      id: '/admin/subscriptions'
+      path: '/admin/subscriptions'
+      fullPath: '/admin/subscriptions'
+      preLoaderRoute: typeof AdminSubscriptionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/plans': {
+      id: '/admin/plans'
+      path: '/admin/plans'
+      fullPath: '/admin/plans'
+      preLoaderRoute: typeof AdminPlansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/dashboard': {
+      id: '/admin/dashboard'
+      path: '/admin/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminDashboardRoute: AdminDashboardRoute,
   LoginRoute: LoginRoute,
-  PlansRoute: PlansRoute,
   SignupRoute: SignupRoute,
-  SubscriptionsRoute: SubscriptionsRoute,
-  UsagesRoute: UsagesRoute,
+  AdminDashboardRoute: AdminDashboardRoute,
+  AdminPlansRoute: AdminPlansRoute,
+  AdminSubscriptionsRoute: AdminSubscriptionsRoute,
+  AdminUsagesRoute: AdminUsagesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

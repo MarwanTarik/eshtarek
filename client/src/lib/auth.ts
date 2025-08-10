@@ -13,13 +13,3 @@ export const auth = {
     apiClient.setTokens(tokens)
   },
 }
-
-export const useAuth = () => {
-  return {
-    isAuthenticated: auth.isAuthenticated,
-    logout: auth.logout,
-    getAccessToken: auth.getAccessToken,
-    getRefreshToken: auth.getRefreshToken,
-    setTokens: auth.setTokens,
-  }
-}

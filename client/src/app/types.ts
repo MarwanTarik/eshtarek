@@ -136,7 +136,7 @@ export interface SubscriptionCreateRequest {
 }
 
 export interface SubscriptionUpdateRequest {
-  status?: SubscriptionsStatus
+  plan_id?: string
 }
 
 // Usage types

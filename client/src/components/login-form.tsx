@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
-import type {LoginRequest} from '@/app/types';
-import {  Role } from '@/app/types'
-import { LoginMutationOptions } from '@/app/authentication'
+import { Link, useRouter } from '@tanstack/react-router'
+import type { LoginRequest } from '@/app/types';
+import { Role } from '@/app/types'
+import { useAuth } from '@/hooks/use-auth'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -14,13 +13,14 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<'div'>) {
+  const router = useRouter()
+  const { login, isLoading, user } = useAuth()
   const [formData, setFormData] = useState<LoginRequest>({
     email: '',
     password: '',
   })
   const [errors, setErrors] = useState<Partial<LoginRequest>>({})
-
-  const loginMutation = useMutation(LoginMutationOptions)
+  const [loginError, setLoginError] = useState<string | null>(null)
 
   const handleInputChange =
     (field: keyof LoginRequest) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,18 +61,16 @@ export function LoginForm({
     }
 
     try {
-      const response = await loginMutation.mutateAsync(formData)
-
-      const token = response.access
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      const role = payload.role
-      
-      if (role === Role.PLATFORM_ADMIN) {
-        window.location.href = '/admin-dashboard'
+      setLoginError(null)
+      await login(formData.email, formData.password)
+      if (user?.role === Role.PLATFORM_ADMIN) {
+        router.navigate({ to: '/admin/dashboard' })
+      } else {
+        router.navigate({ to: '/' })
       }
     } catch (error) {
-      console.error('Login failed:')
-      // TODO: Handle login error (e.g., show error message)
+      console.error('Login failed:', error)
+      setLoginError('Login failed. Please check your credentials and try again.')
     }
   }
 
@@ -92,7 +90,7 @@ export function LoginForm({
                     value={formData.email}
                     onChange={handleInputChange('email')}
                     required
-                    disabled={loginMutation.isPending}
+                    disabled={isLoading}
                   />
                   {errors.email && (
                     <span className="text-sm text-red-500">{errors.email}</span>
@@ -109,7 +107,7 @@ export function LoginForm({
                     value={formData.password}
                     onChange={handleInputChange('password')}
                     required
-                    disabled={loginMutation.isPending}
+                    disabled={isLoading}
                   />
                   {errors.password && (
                     <span className="text-sm text-red-500">
@@ -117,17 +115,17 @@ export function LoginForm({
                     </span>
                   )}
                 </div>
-                {loginMutation.error && (
+                {loginError && (
                   <div className="text-sm text-red-500">
-                    Login failed. Please check your credentials and try again.
+                    {loginError}
                   </div>
                 )}
                 <Button
                   type="submit"
                   className="w-full bg-purple-500 hover:bg-purple-400"
-                  disabled={loginMutation.isPending}
+                  disabled={isLoading}
                 >
-                  {loginMutation.isPending ? 'Logging in...' : 'Login'}
+                  {isLoading ? 'Logging in...' : 'Login'}
                 </Button>
               </div>
               <div className="text-center text-sm">
