@@ -26,22 +26,22 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "/admin-dashboard",
+      url: "/admin/dashboard",
       icon: IconDashboard,
     },
     {
       title: "Plans",
-      url: "/plans",
+      url: "/admin/plans",
       icon: IconListDetails,
     },
     {
       title: "Usages",
-      url: "/usages",
+      url: "/admin/usages",
       icon: IconChartBar,
     },
     {
       title: "Subscriptions",
-      url: "/subscriptions",
+      url: "/admin/subscriptions",
       icon: IconUsers,
     },
   ],
