@@ -292,6 +292,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
         token['role'] = user.role
         token['id'] = str(user.id)
+        token['email'] = user.email
+        token['name'] = user.name
+        token['created_at'] = user.created_at.isoformat() if user.created_at else None
+        token['updated_at'] = user.updated_at.isoformat() if user.updated_at else None
         return token
 
     def validate(self, attrs):
