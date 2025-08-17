@@ -97,9 +97,7 @@ The user stories cover:
 - **TanStack Router** - Client-side routing
 - **TanStack Query** - Data fetching
 - **Tailwind CSS** - Styling
-- **Radix UI** - Component library
-- **Recharts** - Data visualization
-- **Jotai** - State management
+- **Shadcn** - Component library
 
 ### DevOps
 - **Docker** - Containerization
@@ -340,7 +338,6 @@ Authorization: Bearer <your-jwt-token>
 | Subscription Handling | Subscribe, upgrade, downgrade plans | Complete |
 | Usage Monitoring | Track and enforce usage limits | Complete |
 | Billing Simulation | Mock payment processing | Complete |
-| Admin Analytics | Platform-wide reporting | Complete |
 
 ## Testing
 
@@ -378,18 +375,6 @@ pnpm test --coverage
 - **Swagger UI**: http://localhost:8000/swagger/
 - **ReDoc**: http://localhost:8000/redoc/
 
-### Key API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/auth/register/` | POST | User registration |
-| `/api/auth/login/` | POST | User login |
-| `/api/auth/logout/` | POST | User logout |
-| `/api/tenants/` | GET, POST | Tenant management |
-| `/api/plans/` | GET, POST | Subscription plans |
-| `/api/subscriptions/` | GET, POST | Subscription management |
-| `/api/usage/` | GET | Usage statistics |
-
 ## Contributing
 
 ### Development Workflow
@@ -421,11 +406,6 @@ pre-commit run --all-files
 ```
 
 ---
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## Support
 
 For questions or support, please:
