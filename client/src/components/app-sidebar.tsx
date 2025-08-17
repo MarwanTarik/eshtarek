@@ -1,10 +1,5 @@
 import * as React from "react"
-import {
-  IconChartBar,
-  IconDashboard,
-  IconListDetails,
-  IconUsers,
-} from "@tabler/icons-react"
+import type { Icon } from "@tabler/icons-react"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import {
@@ -17,37 +12,21 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/admin/dashboard",
-      icon: IconDashboard,
-    },
-    {
-      title: "Plans",
-      url: "/admin/plans",
-      icon: IconListDetails,
-    },
-    {
-      title: "Usages",
-      url: "/admin/usages",
-      icon: IconChartBar,
-    },
-    {
-      title: "Subscriptions",
-      url: "/admin/subscriptions",
-      icon: IconUsers,
-    },
-  ],
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  data: {
+    user: {
+      name: string;
+      email: string;
+      avatar: string;
+    };
+    navMain: Array<{
+      title: string;
+      url: string;
+      icon: Icon;
+    }>;
+  };
 }
-
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ data, ...props }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>

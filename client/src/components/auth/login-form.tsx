@@ -63,9 +63,12 @@ export function LoginForm({
     try {
       setLoginError(null)
       await login(formData.email, formData.password)
+      console.log('Login successful:', user)
       if (user?.role === Role.PLATFORM_ADMIN) {
         router.navigate({ to: '/admin/dashboard' })
-      } else {
+      } else if (user?.role === Role.TENANT_ADMIN) {
+        router.navigate({ to: '/tenant/dashboard' })
+      } else { 
         router.navigate({ to: '/' })
       }
     } catch (error) {

@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { SubscriptionsTable } from '@/components/admin/subscriptions/subscriptions-table'
 import { SubscriptionFormDialog } from '@/components/admin/subscriptions/subscription-form-dialog'
 import { authGuard } from '@/guards/auth-guard'
+import { adminDashboardData } from '@/constants/admin-dashboard-sidebar'
 
 export const Route = createFileRoute('/admin/subscriptions')({
   beforeLoad: () => {
@@ -112,7 +113,7 @@ function AdminSubscriptionsPage() {
 
 
   return (
-    <DashboardLayout>
+    <DashboardLayout defaultData={adminDashboardData}>
       <div>
         <Card>
           <CardHeader>

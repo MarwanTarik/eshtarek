@@ -11,6 +11,7 @@ import { PlanFormDialog } from '@/components/admin/plans/plan-form-dialog'
 import { Button } from '@/components/ui/button'
 import { DashboardLayout } from '@/components/dashboard-layout'
 import { authGuard } from '@/guards/auth-guard';
+import { adminDashboardData } from '@/constants/admin-dashboard-sidebar';
 
 export const Route = createFileRoute('/admin/plans')({
   beforeLoad: () => {
@@ -136,7 +137,7 @@ function PlansPage() {
 
   if (plansIsPending) {
     return (
-      <DashboardLayout>
+      <DashboardLayout defaultData={adminDashboardData}>
         <div>Loading...</div>
       </DashboardLayout>
     );
@@ -144,7 +145,7 @@ function PlansPage() {
 
   if (plansIsError) {
     return (
-      <DashboardLayout>
+      <DashboardLayout defaultData={adminDashboardData}>
         <div>Error loading plans</div>
       </DashboardLayout>
     );
@@ -152,7 +153,7 @@ function PlansPage() {
 
 
   return (
-    <DashboardLayout>
+    <DashboardLayout defaultData={adminDashboardData}>
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between gap-4">

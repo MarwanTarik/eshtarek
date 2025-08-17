@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TenantDashboardRouteImport } from './routes/tenant/dashboard'
 import { Route as AdminUsagesRouteImport } from './routes/admin/usages'
 import { Route as AdminSubscriptionsRouteImport } from './routes/admin/subscriptions'
 import { Route as AdminPlansRouteImport } from './routes/admin/plans'
@@ -30,6 +31,11 @@ const LoginRoute = LoginRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TenantDashboardRoute = TenantDashboardRouteImport.update({
+  id: '/tenant/dashboard',
+  path: '/tenant/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminUsagesRoute = AdminUsagesRouteImport.update({
@@ -61,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/admin/plans': typeof AdminPlansRoute
   '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/usages': typeof AdminUsagesRoute
+  '/tenant/dashboard': typeof TenantDashboardRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByTo {
   '/admin/plans': typeof AdminPlansRoute
   '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/usages': typeof AdminUsagesRoute
+  '/tenant/dashboard': typeof TenantDashboardRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +88,7 @@ export interface FileRoutesById {
   '/admin/plans': typeof AdminPlansRoute
   '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/usages': typeof AdminUsagesRoute
+  '/tenant/dashboard': typeof TenantDashboardRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +100,7 @@ export interface FileRouteTypes {
     | '/admin/plans'
     | '/admin/subscriptions'
     | '/admin/usages'
+    | '/tenant/dashboard'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +110,7 @@ export interface FileRouteTypes {
     | '/admin/plans'
     | '/admin/subscriptions'
     | '/admin/usages'
+    | '/tenant/dashboard'
   id:
     | '__root__'
     | '/'
@@ -109,6 +120,7 @@ export interface FileRouteTypes {
     | '/admin/plans'
     | '/admin/subscriptions'
     | '/admin/usages'
+    | '/tenant/dashboard'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +131,7 @@ export interface RootRouteChildren {
   AdminPlansRoute: typeof AdminPlansRoute
   AdminSubscriptionsRoute: typeof AdminSubscriptionsRoute
   AdminUsagesRoute: typeof AdminUsagesRoute
+  TenantDashboardRoute: typeof TenantDashboardRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -142,6 +155,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tenant/dashboard': {
+      id: '/tenant/dashboard'
+      path: '/tenant/dashboard'
+      fullPath: '/tenant/dashboard'
+      preLoaderRoute: typeof TenantDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/usages': {
@@ -183,6 +203,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminPlansRoute: AdminPlansRoute,
   AdminSubscriptionsRoute: AdminSubscriptionsRoute,
   AdminUsagesRoute: AdminUsagesRoute,
+  TenantDashboardRoute: TenantDashboardRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

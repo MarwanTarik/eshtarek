@@ -123,7 +123,6 @@ export function SignupForm({
       setSignupError(null)
       await signup(formData, role)
       console.log('Registration successful')
-      // Redirect to login page after successful registration
       router.navigate({ to: '/login' })
     } catch (error) {
       console.error('Registration failed:', error)

@@ -1,5 +1,4 @@
 import { redirect } from "@tanstack/react-router"
-import { Role } from "@/app/types"
 import { auth } from "@/lib/auth"
 
 export function authGuard (route: string) {
@@ -12,22 +11,22 @@ export function authGuard (route: string) {
     })
   }
 
-  const token = auth.getRefreshToken()
-  if (token) {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      const userRole = payload.role
+  // const token = auth.getRefreshToken()
+  // if (token) {
+  //   try {
+  //     const payload = JSON.parse(atob(token.split('.')[1]))
+  //     const userRole = payload.role
 
-      if (userRole !== Role.PLATFORM_ADMIN) {
-        throw redirect({
-          to: '/',
-        })
-      }
-    } catch (error) {
-      auth.logout()
-      throw redirect({
-        to: '/login',
-      })
-    }
-  }
+  //     if (userRole !== Role.PLATFORM_ADMIN) {
+  //       throw redirect({
+  //         to: '/',
+  //       })
+  //     }
+  //   } catch (error) {
+  //     auth.logout()
+  //     throw redirect({
+  //       to: '/login',
+  //     })
+  //   }
+  // }
 }
