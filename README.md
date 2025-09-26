@@ -1,6 +1,6 @@
 # Eshtarek - Subscription Management Platform
 
-**Eshtarek** enables businesses to run subscription services without development overhead. This project prototypes the core engine of a multi-tenant subscription platform, supporting isolated tenant data, plan management, and subscription workflows.
+This project prototypes the core engine of a multi-tenant subscription platform, supporting isolated tenant data, plan management, and subscription workflows.
 
 ## Table of Contents
 
